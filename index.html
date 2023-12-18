@@ -1,0 +1,71 @@
+<body>
+    <input id="newUser" placeholder="enter new user name">
+    <button id="add">ADD</button>
+    <select id="userList">
+        <option value="">Select a User</option>
+    </select>
+    <input type="color" id="colorInput">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addUserButton = document.getElementById('add');
+            const newUserInput = document.getElementById('newUser');
+            const userListSelect = document.getElementById('userList');
+            const colorInput = document.getElementById('colorInput');
+
+            addUserButton.addEventListener('click', () => {
+                fetch("http://localhost:3100/api/user", {
+                    method: "POST",
+                    headers: { "Content-type": "application/json" },
+                    body: JSON.stringify({ username: newUserInput.value })
+                }).then(() => {
+                    loadUsers(); // Reload user list after adding a new user
+                });
+            });
+
+            function loadUsers() {
+                fetch("http://localhost:3100/api/userdata")
+                    .then(r => r.json())
+                    .then(data => {
+                        // Clear existing options
+                        userListSelect.innerHTML = '<option value="">Select a User</option>';
+
+                        // Add new options
+                        data.forEach(item => {
+                            userListSelect.innerHTML +=
+                                `<option value="${encodeURIComponent(JSON.stringify(item))}">${item.username}</option>`;
+                        });
+                    });
+            }
+
+            loadUsers(); // Initial load of users
+
+            userListSelect.addEventListener('change', () => {
+                if (userListSelect.value) {
+                    let jsonText = decodeURIComponent(userListSelect.value);
+                    let data = JSON.parse(jsonText);
+                    console.log(data);
+                    colorInput.value = data.color;
+                }
+            });
+
+            colorInput.addEventListener('input', () => {
+                const selectedUser = userListSelect.selectedOptions[0];
+                if (selectedUser) {
+                    fetch("http://localhost:3100/api/userdata", {
+                        method: "POST",
+                        headers: {
+                            "Content-type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            username: selectedUser.innerHTML,
+                            color: colorInput.value
+                        })
+                    }).then(() => {
+                        // Do something after updating the user data if needed
+                    });
+                }
+            });
+        });
+    </script>
+</body>
